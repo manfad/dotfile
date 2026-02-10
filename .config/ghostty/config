@@ -1,0 +1,29 @@
+macos-titlebar-style = hidden
+confirm-close-surface = false
+maximize = true 
+# Font
+font-family = "CaskaydiaCove Nerd Font"
+
+font-size = 14
+# Less padding (top, right, bottom, left)
+window-padding-x = 10
+window-padding-y = 5,2
+background = "#000000"
+
+# Always maximize on start
+window-inherit-working-directory = true
+background-blur-radius = 20
+window-padding-x = 4
+window-padding-y = 4
+window-width = 120
+window-height = 40
+# Keybindings for switching tabs/windows
+keybind = cmd+1=text:\x1b1
+keybind = cmd+2=text:\x1b2
+keybind = cmd+3=text:\x1b3
+keybind = cmd+4=text:\x1b4
+keybind = cmd+5=text:\x1b5
+
+# This line auto-starts tmux. Keep it if you use tmux!
+command = /bin/zsh -c "tmux attach-session -t dev || tmux new-session -s dev"
+background-opacity = 0.85

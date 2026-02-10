@@ -1,0 +1,42 @@
+format = """
+$directory\
+$git_branch\
+$git_status\
+$fill\
+$cmd_duration
+$sudo\
+$character"""
+
+right_format = "$time"
+
+[time]
+disabled = false
+time_format = "%H:%M"
+style = "#5C5C70"
+format = "[$time]($style)"
+
+[fill]
+symbol = " "
+
+[directory]
+style = "bold #d500f9"
+format = "[$path]($style) "
+
+[git_status]
+style = "bold #ff4081"
+format = "([\\[$all_status$ahead_behind\\]]($style) )"
+
+[cmd_duration]
+min_time = 500
+style = "#c4a1ff"
+format = "[$duration]($style)"
+
+[sudo]
+disabled = false
+symbol = "󰌆 "
+style = "bold #ff4081"
+format = "[$symbol]($style)"
+
+[character]
+success_symbol = "[➜](bold #FF007C) "
+error_symbol   = "[➜](bold #ff1744) "
