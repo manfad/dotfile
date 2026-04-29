@@ -1,0 +1,14 @@
+# macOS
+.DS_Store
+
+# Backup folder created by install.sh
+.dotfiles_backup_*/
+
+# Karabiner runtime files (only karabiner.json is tracked)
+.config/karabiner/assets/
+.config/karabiner/automatic_backups/
+
+# Editor / OS
+*.swp
+*.swo
+Thumbs.db

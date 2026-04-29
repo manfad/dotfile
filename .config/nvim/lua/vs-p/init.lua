@@ -23,9 +23,25 @@ function M.open()
 		return
 	end
 
+	-- Check if we're in an explorer (ex or vs-p) buffer and close it first
+	local current_ft = vim.bo.filetype
+	if current_ft == "ex-explorer" or current_ft == "vs-p" or current_ft == "vs-p_search" or current_ft == "vs-f" or current_ft == "vs-f_search" then
+		-- Close the explorer first
+		if current_ft == "ex-explorer" then
+			pcall(require("ex").close)
+		else
+			M.close()
+			return
+		end
+		vim.schedule(function()
+			M.open()
+		end)
+		return
+	end
+
 	M.state.is_open = true
 	M.state.cwd = vim.fn.getcwd()
-	M.state.mode = "search"
+	M.state.mode = "tree"
 	M.state.cursor_line = 1
 	M.state.search_query = ""
 	M.state.expanded = { [M.state.cwd] = true }
@@ -39,14 +55,20 @@ function M.open()
 	-- Create UI
 	ui.create_layout()
 
-	-- Show empty results initially (search-first mode)
-	ui.set_results({}, {})
-
 	-- Set up keymaps
 	M.setup_keymaps()
 
 	-- Start with search focused (like VS Code)
 	ui.focus_search()
+
+	-- Deferred refresh so the tree renders after layout is stable
+	vim.schedule(function()
+		M.refresh_tree()
+		if current_file and current_file ~= "" then
+			M.jump_to_file(current_file)
+			M.update_preview()
+		end
+	end)
 end
 
 -- Expand all parent directories of a file
@@ -380,6 +402,15 @@ function M.setup_keymaps()
 	end, search_opts)
 	vim.keymap.set("i", "<CR>", function()
 		vim.cmd("stopinsert")
+		-- If exactly 1 result, open it directly
+		if #M.state.search_results == 1 then
+			local item = M.state.search_results[1]
+			if item.type == "file" then
+				M.close()
+				vim.cmd("edit " .. vim.fn.fnameescape(item.path))
+				return
+			end
+		end
 		ui.focus_results()
 	end, search_opts)
 	vim.keymap.set("i", "<Tab>", function()

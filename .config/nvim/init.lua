@@ -43,12 +43,6 @@ vim.api.nvim_create_autocmd("VimEnter", {
 
 -- Load plugins
 require("lazy").setup({
-	-- Colorscheme (blacklotus - custom theme in colors/blacklotus.lua)
-	{
-		"nyoom-engineering/oxocarbon.nvim", -- keep as fallback
-		lazy = true,
-	},
-
 	-- Fuzzy finder (like Cmd-P in VSCode)
 	{
 		"nvim-telescope/telescope.nvim",
@@ -62,7 +56,7 @@ require("lazy").setup({
 					prompt_prefix = "   ",
 					selection_caret = " ",
 					path_display = { "smart" },
-					file_ignore_patterns = { "node_modules", ".git/", "target/" },
+					file_ignore_patterns = { "node_modules", ".git/" },
 					layout_strategy = "horizontal",
 					layout_config = {
 						preview_width = 0.55,
@@ -87,13 +81,6 @@ require("lazy").setup({
 					require("telescope.builtin").buffers()
 				end,
 				desc = "Buffers",
-			},
-			{
-				"<leader>s",
-				function()
-					require("telescope.builtin").lsp_document_symbols()
-				end,
-				desc = "Document symbols",
 			},
 		},
 	},
@@ -121,7 +108,6 @@ require("lazy").setup({
 					"lua",
 					"vim",
 					"vimdoc",
-					"java",
 					"python",
 					-- Docs
 					"markdown",
@@ -141,21 +127,7 @@ require("lazy").setup({
 			vim.g.matchup_matchparen_deferred = 1
 		end,
 	},
-	-- Multi-cursor (like Ctrl+D in VSCode)
-	{
-		"mg979/vim-visual-multi",
-		branch = "master",
-		init = function()
-			vim.g.VM_maps = {
-				["Find Under"] = "<C-n>",
-				["Find Subword Under"] = "<C-n>",
-				["Add Cursor Down"] = "<C-Down>",
-				["Add Cursor Up"] = "<C-Up>",
-				["Select All"] = "<C-a>",
-			}
-			vim.g.VM_theme = "iceblue"
-		end,
-	},
+
 	-- Auto-close and Auto-rename HTML/JSX/TSX tags
 	{
 		"windwp/nvim-ts-autotag",
@@ -171,196 +143,31 @@ require("lazy").setup({
 		end,
 	},
 
-	-- Mason: LSP/DAP/Linter installer
-	{
-		"williamboman/mason.nvim",
-		config = function()
-			require("mason").setup()
-		end,
-	},
-
-	-- Mason-LSPconfig bridge
-	{
-		"williamboman/mason-lspconfig.nvim",
-		dependencies = { "williamboman/mason.nvim" },
-		config = function()
-			require("mason-lspconfig").setup({
-				ensure_installed = {
-					"lua_ls", -- Lua
-					"ts_ls", -- TypeScript/JavaScript
-					"tailwindcss", -- Tailwind CSS
-					"cssls", -- CSS
-					"html", -- HTML
-					"jsonls", -- JSON
-					"yamlls", -- YAML
-					"eslint", -- ESLint
-					-- jdtls handled separately via nvim-jdtls
-				},
-			})
-		end,
-	},
-
-	-- JSON/YAML Schemas
-	{
-		"b0o/schemastore.nvim",
-		lazy = true,
-	},
-
-	-- LSP setup using native Neovim 0.11+ API
-	{
-		"neovim/nvim-lspconfig",
-		dependencies = { "saghen/blink.cmp", "b0o/schemastore.nvim" },
-		config = function()
-			local capabilities = require("blink.cmp").get_lsp_capabilities()
-
-			-- Lua LSP
-			vim.lsp.config("lua_ls", {
-				capabilities = capabilities,
-				settings = {
-					Lua = {
-						diagnostics = { globals = { "vim" } },
-					},
-				},
-			})
-			vim.lsp.enable("lua_ls")
-
-			-- TypeScript/JavaScript LSP
-			vim.lsp.config("ts_ls", {
-				capabilities = capabilities,
-				init_options = {
-					plugins = {
-						{
-							name = "@vue/typescript-plugin",
-							location = vim.fn.stdpath("data")
-								.. "/mason/packages/vue-language-server/node_modules/@vue/language-server",
-							languages = { "vue" },
-						},
-					},
-				},
-				filetypes = { "typescript", "javascript", "javascriptreact", "typescriptreact", "vue" },
-			})
-			vim.lsp.enable("ts_ls")
-
-			-- Vue LSP (Volar)
-			vim.lsp.config("volar", {
-				capabilities = capabilities,
-				filetypes = { "vue" },
-				init_options = {
-					vue = {
-						hybridMode = true,
-					},
-				},
-			})
-			vim.lsp.enable("volar")
-
-			-- Tailwind CSS LSP
-			vim.lsp.config("tailwindcss", {
-				capabilities = capabilities,
-				filetypes = {
-					"html",
-					"css",
-					"scss",
-					"javascript",
-					"javascriptreact",
-					"typescript",
-					"typescriptreact",
-					"vue",
-				},
-			})
-			vim.lsp.enable("tailwindcss")
-
-			-- CSS LSP
-			vim.lsp.config("cssls", {
-				capabilities = capabilities,
-			})
-			vim.lsp.enable("cssls")
-
-			-- HTML LSP
-			vim.lsp.config("html", {
-				capabilities = capabilities,
-			})
-			vim.lsp.enable("html")
-
-			-- JSON LSP with schemas
-			vim.lsp.config("jsonls", {
-				capabilities = capabilities,
-				settings = {
-					json = {
-						schemas = require("schemastore").json.schemas(),
-						validate = { enable = true },
-					},
-				},
-			})
-			vim.lsp.enable("jsonls")
-
-			-- YAML LSP with schemas
-			vim.lsp.config("yamlls", {
-				capabilities = capabilities,
-				settings = {
-					yaml = {
-						schemas = require("schemastore").yaml.schemas(),
-						schemaStore = { enable = false, url = "" },
-					},
-				},
-			})
-			vim.lsp.enable("yamlls")
-
-			-- ESLint LSP
-			vim.lsp.config("eslint", {
-				capabilities = capabilities,
-				on_attach = function(client, bufnr)
-					-- Auto-fix on save
-					vim.api.nvim_create_autocmd("BufWritePre", {
-						buffer = bufnr,
-						command = "EslintFixAll",
-					})
-				end,
-			})
-			vim.lsp.enable("eslint")
-
-			-- LSP Keymaps (set when LSP attaches)
-			vim.api.nvim_create_autocmd("LspAttach", {
-				callback = function(args)
-					local opts = { buffer = args.buf }
-					vim.keymap.set("n", "gd", vim.lsp.buf.definition, opts)
-					vim.keymap.set("n", "gr", function()
-						require("telescope.builtin").lsp_references()
-					end, opts)
-					vim.keymap.set("n", "K", vim.lsp.buf.hover, opts)
-					vim.keymap.set("n", "<leader>rn", vim.lsp.buf.rename, opts)
-					vim.keymap.set("n", "<leader>ca", vim.lsp.buf.code_action, opts)
-					vim.keymap.set("n", "<leader>d", vim.diagnostic.open_float, opts)
-					vim.keymap.set("n", "[d", vim.diagnostic.goto_prev, opts)
-					vim.keymap.set("n", "]d", vim.diagnostic.goto_next, opts)
-				end,
-			})
-		end,
-	},
-	-- 1. Git Gutter Signs & Blame (GitLens style)
+	-- Git Gutter Signs & Blame (GitLens style)
 	{
 		"lewis6991/gitsigns.nvim",
 		config = function()
 			require("gitsigns").setup({
-				current_line_blame = true, -- Shows who changed the line (GitLens style)
+				current_line_blame = true,
 			})
 		end,
 	},
 
-	-- 2. Auto-close Brackets (), {}, []
+	-- Auto-close Brackets (), {}, []
 	{
 		"windwp/nvim-autopairs",
 		event = "InsertEnter",
 		config = true,
 	},
 
-	-- 3. Comment with gcc (line) or gc (selection)
+	-- Comment with gcc (line) or gc (selection)
 	{
 		"numToStr/Comment.nvim",
 		event = "VeryLazy",
 		config = true,
 	},
 
-	-- 4. Conform - Code formatter
+	-- Conform - Code formatter
 	{
 		"stevearc/conform.nvim",
 		event = "BufWritePre",
@@ -368,7 +175,7 @@ require("lazy").setup({
 			{
 				"<leader>pf",
 				function()
-					require("conform").format({ async = true, lsp_fallback = true })
+					require("conform").format({ async = true })
 				end,
 				desc = "Format file",
 			},
@@ -389,18 +196,15 @@ require("lazy").setup({
 				markdown = { "prettier" },
 				graphql = { "prettier" },
 				lua = { "stylua" },
-				java = { "google-java-format" },
-				xml = { "xmlformat" },
 				sql = { "sql_formatter" },
 			},
 			format_on_save = {
 				timeout_ms = 1000,
-				lsp_fallback = true,
 			},
 		},
 	},
 
-	-- 5. Indent guides (like VSCode)
+	-- Indent guides (like VSCode)
 	{
 		"lukas-reineke/indent-blankline.nvim",
 		main = "ibl",
@@ -411,24 +215,7 @@ require("lazy").setup({
 		},
 	},
 
-	-- 6. Mini.surround - Surround text (sa, sd, sr)
-	{
-		"echasnovski/mini.surround",
-		event = "VeryLazy",
-		opts = {
-			mappings = {
-				add = "sa", -- Add surrounding (sa" to surround with ")
-				delete = "sd", -- Delete surrounding (sd")
-				replace = "sr", -- Replace surrounding (sr"')
-				find = "sf", -- Find surrounding
-				find_left = "sF", -- Find surrounding to the left
-				highlight = "sh", -- Highlight surrounding
-				update_n_lines = "sn", -- Update n_lines
-			},
-		},
-	},
-
-	-- 6. Harpoon - Quick file marks
+	-- Harpoon - Quick file marks
 	{
 		"ThePrimeagen/harpoon",
 		branch = "harpoon2",
@@ -458,13 +245,13 @@ require("lazy").setup({
 		end,
 	},
 
-	-- 7. Color preview for hex/rgb (shows actual color)
+	-- Color preview for hex/rgb (shows actual color)
 	{
 		"norcalli/nvim-colorizer.lua",
 		event = "BufReadPost",
 		config = function()
 			require("colorizer").setup({
-				"*", -- all filetypes
+				"*",
 			}, {
 				RGB = true,
 				RRGGBB = true,
@@ -478,7 +265,7 @@ require("lazy").setup({
 		end,
 	},
 
-	-- Auto-completion (blink.cmp - faster alternative to nvim-cmp)
+	-- Auto-completion (blink.cmp)
 	{
 		"saghen/blink.cmp",
 		version = "1.*",
@@ -505,73 +292,10 @@ require("lazy").setup({
 				documentation = { auto_show = true },
 			},
 			sources = {
-				default = { "lsp", "path", "snippets", "buffer" },
+				default = { "path", "snippets", "buffer" },
 			},
 			signature = { enabled = true },
 		},
-	},
-
-	-- Java LSP (nvim-jdtls)
-	{
-		"mfussenegger/nvim-jdtls",
-		ft = "java",
-	},
-
-	-- Spring Boot support
-	{
-		"elmcgill/springboot-nvim",
-		ft = "java",
-		dependencies = {
-			"neovim/nvim-lspconfig",
-			"mfussenegger/nvim-jdtls",
-		},
-		config = function()
-			local springboot = require("springboot")
-			springboot.setup({})
-
-			-- Spring Boot keymaps
-			vim.api.nvim_create_autocmd("FileType", {
-				pattern = "java",
-				callback = function()
-					vim.keymap.set("n", "<leader>jr", springboot.boot_run, { buffer = true, desc = "Spring Boot Run" })
-					vim.keymap.set(
-						"n",
-						"<leader>jg",
-						springboot.generate_class,
-						{ buffer = true, desc = "Generate Class" }
-					)
-					vim.keymap.set(
-						"n",
-						"<leader>jG",
-						springboot.generate_interface,
-						{ buffer = true, desc = "Generate Interface" }
-					)
-				end,
-			})
-		end,
-	},
-
-	-- Trouble - Better diagnostics list
-	{
-		"folke/trouble.nvim",
-		dependencies = { "nvim-tree/nvim-web-devicons" },
-		keys = {
-			{ "<leader>xx", "<cmd>Trouble diagnostics toggle<cr>", desc = "Diagnostics" },
-			{ "<leader>xd", "<cmd>Trouble diagnostics toggle filter.buf=0<cr>", desc = "Buffer Diagnostics" },
-			{ "<leader>xq", "<cmd>Trouble quickfix toggle<cr>", desc = "Quickfix List" },
-		},
-		opts = {},
-	},
-
-	-- TODO comments highlighting
-	{
-		"folke/todo-comments.nvim",
-		dependencies = { "nvim-lua/plenary.nvim" },
-		event = "BufReadPost",
-		keys = {
-			{ "<leader>xt", "<cmd>Trouble todo toggle<cr>", desc = "TODOs" },
-		},
-		opts = {},
 	},
 
 	-- Statusline
@@ -585,12 +309,12 @@ require("lazy").setup({
 				bg_dark = "#050009",
 				fg = "#E0E0E0",
 				fg_dim = "#c4a1ff",
-				purple = "#9c27b0", -- kuroyukihime normal mode
+				purple = "#9c27b0",
 				magenta = "#FF007C",
 				hotpink = "#ff4081",
-				green = "#00ff87", -- insert mode (brighter green)
-				blue = "#00bfff", -- visual mode (brighter blue)
-				red = "#ff1744", -- replace/command mode
+				green = "#00ff87",
+				blue = "#00bfff",
+				red = "#ff1744",
 				grey = "#5C5C70",
 			}
 
@@ -650,8 +374,11 @@ require("lazy").setup({
 -- Load colorscheme
 vim.cmd.colorscheme("blacklotus")
 
--- Load vs-p (file explorer with search-first UI)
-require("vs-p").setup({ keymap = "<leader>e" })
+-- Load vs-e (buffer-based file explorer - replaces :Ex/netrw)
+require("vs-e").setup({ keymap = "<leader>e" })
+
+-- Load vs-p (file picker dialog with search-first UI)
+require("vs-p").setup({ keymap = "<leader>p" })
 
 -- Load vs-f (text search with ripgrep)
 require("vs-f").setup({ keymap = "<leader>f" })
@@ -667,3 +394,14 @@ vim.keymap.set("n", "<S-A-Down>", "yyp", { noremap = true, silent = true })
 vim.keymap.set("v", "<S-A-Up>", "y`>pgv", { noremap = true, silent = true })
 vim.keymap.set("v", "<S-A-Down>", "y`<Pgv", { noremap = true, silent = true })
 vim.keymap.set("v", "<leader>i", [[<Esc><C-v>gv$A]], { desc = "Insert at end of multi-selection" })
+
+-- Reload config
+vim.keymap.set("n", "<leader>r", function()
+	for name, _ in pairs(package.loaded) do
+		if name:match("^vs%-") then
+			package.loaded[name] = nil
+		end
+	end
+	vim.cmd("source " .. vim.env.MYVIMRC)
+	vim.notify("Config reloaded", vim.log.levels.INFO)
+end, { desc = "Reload config", silent = true })

@@ -36,6 +36,26 @@ function M.shorten_path(path, depth)
   return "../" .. table.concat(shortened, "/")
 end
 
+-- Build fuzzy regex: "ape" -> "a.*p.*e" (matches "apple")
+local function fuzzy_regex(query)
+  local chars = {}
+  for c in query:gmatch(".") do
+    local escaped = c:gsub("([%.%+%*%?%^%$%(%)%[%]%{%}%|\\])", "\\%1")
+    table.insert(chars, escaped)
+  end
+  return table.concat(chars, ".*")
+end
+
+-- Build fuzzy glob: "ape" -> "*a*p*e*" (for find fallback)
+local function fuzzy_glob(query)
+  local chars = {}
+  for c in query:gmatch(".") do
+    local escaped = c:gsub("([%[%]%?%*])", "\\%1")
+    table.insert(chars, escaped)
+  end
+  return "*" .. table.concat(chars, "*") .. "*"
+end
+
 function M.find_files(cwd, query)
   local results = {}
 
@@ -43,10 +63,6 @@ function M.find_files(cwd, query)
     return results
   end
 
-  -- Escape special characters for shell
-  local escaped_query = query:gsub("([%%%^%$%(%)%.%[%]%*%+%-%?])", "\\%1")
-
-  -- Use fd (preferred)
   local cmd
   if vim.fn.executable("fd") == 1 then
     cmd = {
@@ -58,15 +74,14 @@ function M.find_files(cwd, query)
       "--exclude", "node_modules",
       "--exclude", "target",
       "--exclude", ".class",
-      escaped_query,
+      fuzzy_regex(query),
       cwd,
     }
   else
-    -- Fallback to find
     cmd = {
       "find", cwd,
       "-type", "f",
-      "-iname", "*" .. escaped_query .. "*",
+      "-iname", fuzzy_glob(query),
       "-not", "-path", "*/.git/*",
       "-not", "-path", "*/node_modules/*",
     }
