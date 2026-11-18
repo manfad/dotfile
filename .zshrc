@@ -162,7 +162,6 @@ conf() {
 
   command "$editor" "${files[$key]}"
 }
-alias dev='pnpm dev'
 
 export PATH="/opt/homebrew/opt/postgresql@16/bin:$PATH"
 export LDFLAGS="-L/opt/homebrew/opt/postgresql@16/lib"
@@ -173,7 +172,6 @@ if [ -x "/opt/homebrew/bin/brew" ]; then
     eval "$(/opt/homebrew/bin/brew shellenv)"
 fi
 
-autoload -Uz add-zsh-hook
 # >>> cursor wrapper >>>
 # bare `cursor` → Cursor Agent CLI; otherwise open the desktop app / pass through flags
 cursor() {
@@ -187,12 +185,6 @@ cursor() {
 
 alias p=ports
 alias pk='ports kill'
-
-# >>> lan (LAN devices + ssh/tailscale lists) — ~/me/talk/net >>>
-alias sl='lan ssh' tl='lan ts'
-_sp_ssh_log() { lan log-ssh -- ${(z)1} }
-add-zsh-hook preexec _sp_ssh_log
-# <<< lan <<<
 
 
 # nota            → bring Nota forward
@@ -214,16 +206,6 @@ nota() {
   done
   (( ${#files} )) || { print -u2 "nota: nothing to open"; return 1; }
   open -a Nota -- "${files[@]}"
-}
-
-omscreen() {
-	local action
-	case "$1" in
-		off) action=disable ;;
-		on) action=enable ;;
-		*) echo "usage: omscreen on|off" >&2; return 1 ;;
-	esac
-	ssh omarchy-lan "export HYPRLAND_INSTANCE_SIGNATURE=\$(ls -t \$XDG_RUNTIME_DIR/hypr | head -1); hyprctl dispatch 'hl.dsp.dpms({ action = \"$action\" })' >/dev/null && echo screen $1"
 }
 
 # >>> grok installer >>>
