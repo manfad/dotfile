@@ -7,8 +7,6 @@ export PATH="$HOME/.local/bin:$PATH"
 
 # OpenCode
 export PATH="$HOME/.opencode/bin:$PATH"
-# OpenJDK
-export PATH="/opt/homebrew/opt/openjdk/bin:$PATH"
 
 # Bun
 export BUN_INSTALL="$HOME/.bun"
