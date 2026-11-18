@@ -216,22 +216,6 @@ nota() {
   open -a Nota -- "${files[@]}"
 }
 
-win7() {
-	if ! nc -z localhost 3389 2>/dev/null; then
-		command tmux has-session -t win7 2>/dev/null || command tmux new-session -d -s win7 'ssh win7-rdp'
-		local i
-		for i in {1..20}; do
-			nc -z localhost 3389 2>/dev/null && break
-			sleep 0.5
-		done
-		if ! nc -z localhost 3389 2>/dev/null; then
-			echo "win7: tunnel not up (is the VM running? check: tmux attach -t win7)" >&2
-			return 1
-		fi
-	fi
-	open -a "Windows App" ~/.config/win7/win7.rdp
-}
-
 omscreen() {
 	local action
 	case "$1" in
