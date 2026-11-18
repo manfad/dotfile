@@ -1,36 +1,21 @@
 # ============================================================================
-# OS DETECTION
-# ============================================================================
-case "$OSTYPE" in
-  darwin*) export OS="mac" ;;
-  linux*)
-    if grep -qiE 'microsoft|wsl' /proc/version 2>/dev/null; then
-      export OS="wsl"
-    else
-      export OS="linux"
-    fi
-    ;;
-esac
-
-# ============================================================================
 # PATH CONFIGURATION
 # ============================================================================
 
+# Local bin
 export PATH="$HOME/.local/bin:$PATH"
 
-# Homebrew (mac uses /opt/homebrew, linuxbrew uses /home/linuxbrew)
-if [[ "$OS" == "mac" && -x /opt/homebrew/bin/brew ]]; then
-  eval "$(/opt/homebrew/bin/brew shellenv)"
-elif [[ ("$OS" == "linux" || "$OS" == "wsl") && -x /home/linuxbrew/.linuxbrew/bin/brew ]]; then
-  eval "$(/home/linuxbrew/.linuxbrew/bin/brew shellenv)"
-fi
+# OpenCode
+export PATH="$HOME/.opencode/bin:$PATH"
+# OpenJDK
+export PATH="/opt/homebrew/opt/openjdk/bin:$PATH"
 
-# pnpm (install path differs per OS)
-if [[ "$OS" == "mac" ]]; then
-  export PNPM_HOME="$HOME/Library/pnpm"
-else
-  export PNPM_HOME="$HOME/.local/share/pnpm"
-fi
+# Bun
+export BUN_INSTALL="$HOME/.bun"
+export PATH="$BUN_INSTALL/bin:$PATH"
+
+# pnpm
+export PNPM_HOME="$HOME/Library/pnpm"
 case ":$PATH:" in
   *":$PNPM_HOME:"*) ;;
   *) export PATH="$PNPM_HOME:$PATH" ;;
@@ -40,132 +25,126 @@ esac
 # ZSH PLUGINS
 # ============================================================================
 
-plugins=(
-  git
-  zsh-autosuggestions
-  zsh-syntax-highlighting
-)
-
-[[ -f ~/.zsh-autosuggestions/zsh-autosuggestions.zsh ]] && \
-  source ~/.zsh-autosuggestions/zsh-autosuggestions.zsh
+# Load Autocomplete (Ghost text)
+source ~/.zsh-autosuggestions/zsh-autosuggestions.zsh
 
 # Note: This MUST be sourced after autosuggestions
-[[ -f ~/.zsh-syntax-highlighting/zsh-syntax-highlighting.zsh ]] && \
-  source ~/.zsh-syntax-highlighting/zsh-syntax-highlighting.zsh
+source ~/.zsh-syntax-highlighting/zsh-syntax-highlighting.zsh
 
-# Syntax Highlighting Colors (blacklotus theme)
-ZSH_HIGHLIGHT_STYLES[command]='fg=#d500f9,bold'
-ZSH_HIGHLIGHT_STYLES[unknown-token]='fg=#c2185b'
-ZSH_HIGHLIGHT_STYLES[alias]='fg=#c4a1ff'
-ZSH_HIGHLIGHT_STYLES[builtin]='fg=#ff4081,bold'
-ZSH_HIGHLIGHT_STYLES[path]='fg=#9c27b0'
-ZSH_HIGHLIGHT_STYLES[globbing]='fg=#d500f9'
-ZSH_HIGHLIGHT_STYLES[single-quoted-argument]='fg=#D48BFF'
-ZSH_HIGHLIGHT_STYLES[double-quoted-argument]='fg=#D48BFF'
-ZSH_HIGHLIGHT_STYLES[dollar-quoted-argument]='fg=#D48BFF'
-ZSH_HIGHLIGHT_STYLES[commandseparator]='fg=#BD00FF'
-ZSH_HIGHLIGHT_STYLES[redirection]='fg=#BD00FF'
-ZSH_HIGHLIGHT_STYLES[arg0]='fg=#ff1744,bold'
-ZSH_HIGHLIGHT_STYLES[precommand]='fg=#ff1744,bold'
-
-# eza colors
-export EXA_COLORS="\
-di=38;2;196;161;255:\
-ex=38;2;255;23;68:\
-*.md=38;2;189;0;255:\
-*.lua=38;2;189;0;255:\
-*.ts=38;2;189;0;255:\
-*.tsx=38;2;189;0;255:\
-*.sql=38;2;189;0;255:\
-*.json=38;2;189;0;255:\
-*.js=38;2;189;0;255:\
-*.xml=38;2;189;0;255:\
-*.jsx=38;2;189;0;255:\
-*.vue=38;2;189;0;255:\
-*.java=38;2;189;0;255:\
-fi=37"
+# What you type. Unknown text stays the terminal white; a real command turns green.
+# Defaults paint unknown tokens ANSI red, which is the brown line under the path.
+ZSH_HIGHLIGHT_STYLES[default]='none'
+ZSH_HIGHLIGHT_STYLES[unknown-token]='none'
+ZSH_HIGHLIGHT_STYLES[command]='fg=green'
+ZSH_HIGHLIGHT_STYLES[alias]='fg=green'
+ZSH_HIGHLIGHT_STYLES[builtin]='fg=green,bold'
+ZSH_HIGHLIGHT_STYLES[function]='fg=green'
+ZSH_HIGHLIGHT_STYLES[arg0]='fg=green,bold'
+ZSH_HIGHLIGHT_STYLES[precommand]='fg=yellow'
+ZSH_HIGHLIGHT_STYLES[reserved-word]='fg=yellow'
+ZSH_HIGHLIGHT_STYLES[path]='fg=cyan'
+ZSH_HIGHLIGHT_STYLES[globbing]='fg=yellow'
+ZSH_HIGHLIGHT_STYLES[history-expansion]='fg=yellow'
+ZSH_HIGHLIGHT_STYLES[single-quoted-argument]='fg=yellow'
+ZSH_HIGHLIGHT_STYLES[double-quoted-argument]='fg=yellow'
+ZSH_HIGHLIGHT_STYLES[dollar-quoted-argument]='fg=yellow'
+ZSH_HIGHLIGHT_STYLES[redirection]='fg=yellow'
+ZSH_HIGHLIGHT_STYLES[commandseparator]='fg=8'
+ZSH_HIGHLIGHT_STYLES[comment]='fg=8'
+ZSH_HIGHLIGHT_STYLES[command-substitution-delimiter]='fg=yellow'
+ZSH_HIGHLIGHT_STYLES[process-substitution-delimiter]='fg=yellow'
+ZSH_HIGHLIGHT_STYLES[back-quoted-argument-delimiter]='fg=yellow'
 
 # ============================================================================
 # SHELL INITIALIZATION
 # ============================================================================
 
-command -v zoxide >/dev/null 2>&1 && eval "$(zoxide init zsh)"
-command -v starship >/dev/null 2>&1 && eval "$(starship init zsh)"
+# Zoxide (smart cd)
+eval "$(zoxide init zsh)"
+
+# Starship prompt
+# Select independent Herdr tools before initializing Starship.
+source "$HOME/.config/herdr-app/shell-profile.zsh"
+eval "$(starship init zsh)"
+
+# Bun completions
+[ -s "$HOME/.bun/_bun" ] && source "$HOME/.bun/_bun"
 
 # ============================================================================
 # ALIASES
 # ============================================================================
-
 # File listing (eza)
-alias ls='eza -a --icons --group-directories-first'
+alias ls='eza -la --icons --group-directories-first'  # all files, full detail
 alias ll='eza -a -1 --icons --group-directories-first'
-alias la='eza -la'
-alias ld='eza -1 --sort=modified'
-alias lt='eza --tree'
+alias la='eza -a --icons --group-directories-first'
 
 # File finding (fd)
-alias lf='fd -t f'
+alias fdf='fd -t f'
+alias cpd="printf %s \$(pwd) | pbcopy"
+alias ip='ipconfig getifaddr en0 || ipconfig getifaddr en1'
+alias i='ip'
 
+# Navigation
+alias d='cd ..'
 # Other tools
 alias cat='bat'
 alias reload='source ~/.zshrc'
+alias r='reload'
 
-# Copy current working directory to clipboard
-case "$OS" in
-  mac) alias cpwd='printf %s "$(pwd)" | pbcopy' ;;
-  wsl) alias cpwd='printf %s "$(pwd)" | clip.exe' ;;
-  linux)
-    if command -v wl-copy >/dev/null 2>&1; then
-      alias cpwd='printf %s "$(pwd)" | wl-copy'
-    elif command -v xclip >/dev/null 2>&1; then
-      alias cpwd='printf %s "$(pwd)" | xclip -selection clipboard'
+# Neovim
+# Open nvim with a single path argument by first cd-ing into its folder
+# (the file's parent, or the directory itself). This roots the file explorer
+# there, and leaves the terminal in that folder after you quit.
+# Plain `nvim` is always the default profile; `lazyvim` remains opt-in.
+# NVIM_APPNAME is selected by the terminal profile above.
+nvim() {
+  if [[ $# -eq 1 && "$1" != -* ]]; then
+    if [[ -d "$1" ]]; then
+      cd "$1" && command nvim .
+      return
     fi
-    ;;
-esac
+    if [[ -d "${1:h}" ]]; then
+      cd "${1:h}" && command nvim "${1:t}"
+      return
+    fi
+  fi
+  command nvim "$@"
+}
+
+alias lazyvim="NVIM_APPNAME=lazyvim nvim"
+
+codex() {
+  if [[ "$1" == "yolo" ]]; then
+    shift
+    command codex --dangerously-bypass-approvals-and-sandbox "$@"
+    return
+  fi
+
+  command codex "$@"
+}
 
 # ============================================================================
 # CUSTOM FUNCTIONS
 # ============================================================================
 
-# Local IP — no args returns this machine's IP; with args, passes through to
-# the real `ip` (iproute2) command on Linux.
-ip() {
-  if [[ $# -eq 0 ]]; then
-    case "$OS" in
-      mac) ipconfig getifaddr en0 || ipconfig getifaddr en1 ;;
-      linux|wsl) hostname -I | awk '{print $1}' ;;
-      *) echo "ip: unsupported OS" >&2; return 1 ;;
-    esac
-  else
-    if [[ "$OS" == "linux" || "$OS" == "wsl" ]] && command -v /usr/sbin/ip >/dev/null 2>&1; then
-      /usr/sbin/ip "$@"
-    elif [[ "$OS" == "linux" || "$OS" == "wsl" ]] && command -v /sbin/ip >/dev/null 2>&1; then
-      /sbin/ip "$@"
-    else
-      command ip "$@"
-    fi
-  fi
-}
-
 # Quick config file editor
 conf() {
   local editor="${EDITOR:-nvim}"
   local key="$1"
-
+  
   typeset -A files
   files=(
+    claude       "$HOME/.claude/settings.json"
+    codex        "$HOME/.codex/config.toml"
     ghostty      "$HOME/.config/ghostty/config"
     gitconfig    "$HOME/.gitconfig"
+    herdr        "$HOME/.config/herdr/config.toml"
+    hunk         "$HOME/.config/hunk/config.toml"
     nvim         "$HOME/.config/nvim/init.lua"
+    ssh          "$HOME/.ssh/config"
     starship     "$HOME/.config/starship.toml"
-    tmux         "$HOME/.tmux.conf"
-    zshrc        "$HOME/.zshrc"
+    zsh          "$HOME/.zshrc"
   )
-
-  # Mac-only configs
-  if [[ "$OS" == "mac" ]]; then
-    files[sketchybar]="$HOME/.config/sketchybar/sketchybarrc"
-  fi
 
   if [[ -z "$key" || "$key" == "help" || "$key" == "-h" ]]; then
     echo "available configs:"
@@ -181,5 +160,116 @@ conf() {
     return 1
   fi
 
-  "$editor" "${files[$key]}"
+  command "$editor" "${files[$key]}"
 }
+alias dev='pnpm dev'
+
+export PATH="/opt/homebrew/opt/postgresql@16/bin:$PATH"
+export LDFLAGS="-L/opt/homebrew/opt/postgresql@16/lib"
+export CPPFLAGS="-I/opt/homebrew/opt/postgresql@16/include"
+
+# Prefer Homebrew shims over Vite+ shims for tools like codex/npm/node.
+if [ -x "/opt/homebrew/bin/brew" ]; then
+    eval "$(/opt/homebrew/bin/brew shellenv)"
+fi
+
+autoload -Uz add-zsh-hook
+# >>> cursor wrapper >>>
+# bare `cursor` → Cursor Agent CLI; otherwise open the desktop app / pass through flags
+cursor() {
+  if (( $# == 0 )); then
+    command cursor agent
+  else
+    command cursor "$@"
+  fi
+}
+# <<< cursor wrapper <<<
+
+alias p=ports
+alias pk='ports kill'
+
+# >>> lan (LAN devices + ssh/tailscale lists) — ~/me/talk/net >>>
+alias sl='lan ssh' tl='lan ts'
+_sp_ssh_log() { lan log-ssh -- ${(z)1} }
+add-zsh-hook preexec _sp_ssh_log
+# <<< lan <<<
+
+
+# nota            → bring Nota forward
+# nota .          → open every regular file in this directory (top level, non-hidden)
+# nota FILE...    → open those files in Nota
+nota() {
+  local -a files
+  if (( $# == 0 )); then
+    open -a Nota
+    return
+  fi
+  local arg
+  for arg in "$@"; do
+    if [[ -d $arg ]]; then
+      files+=("$arg"/*(.N))
+    else
+      files+=("$arg")
+    fi
+  done
+  (( ${#files} )) || { print -u2 "nota: nothing to open"; return 1; }
+  open -a Nota -- "${files[@]}"
+}
+
+win7() {
+	if ! nc -z localhost 3389 2>/dev/null; then
+		command tmux has-session -t win7 2>/dev/null || command tmux new-session -d -s win7 'ssh win7-rdp'
+		local i
+		for i in {1..20}; do
+			nc -z localhost 3389 2>/dev/null && break
+			sleep 0.5
+		done
+		if ! nc -z localhost 3389 2>/dev/null; then
+			echo "win7: tunnel not up (is the VM running? check: tmux attach -t win7)" >&2
+			return 1
+		fi
+	fi
+	open -a "Windows App" ~/.config/win7/win7.rdp
+}
+
+omscreen() {
+	local action
+	case "$1" in
+		off) action=disable ;;
+		on) action=enable ;;
+		*) echo "usage: omscreen on|off" >&2; return 1 ;;
+	esac
+	ssh omarchy-lan "export HYPRLAND_INSTANCE_SIGNATURE=\$(ls -t \$XDG_RUNTIME_DIR/hypr | head -1); hyprctl dispatch 'hl.dsp.dpms({ action = \"$action\" })' >/dev/null && echo screen $1"
+}
+
+# >>> grok installer >>>
+export PATH="$HOME/.grok/bin:$PATH"
+fpath=(~/.grok/completions/zsh $fpath)
+autoload -Uz compinit && compinit -C
+# <<< grok installer <<<
+
+# office NAS: if ~/nas is connected, cd into it; otherwise (re)mount first
+nas() {
+  if perl -e 'alarm 3; exec @ARGV' ls ~/nas >/dev/null 2>&1 && mount | grep -q " on $HOME/nas "; then
+    cd ~/nas
+  else
+    umount -f ~/nas 2>/dev/null
+    local pw
+    pw=$(security find-generic-password -a manfad -s nas-smb -w 2>/dev/null) || {
+      echo "nas: no password in Keychain. Run: security add-generic-password -a manfad -s nas-smb -w" >&2
+      return 1
+    }
+    mkdir -p ~/nas
+    mount_smbfs "//manfad:${pw}@192.168.2.223/Office" ~/nas && cd ~/nas
+  fi
+}
+
+# >>> dup >>>
+source "/Users/manfad/talk/dup/dup.zsh"
+# <<< dup <<<
+
+# Vault Phosphor: keep history/completion popups in dark mode.
+export DUP_THEME=dark
+ZSH_AUTOSUGGEST_HIGHLIGHT_STYLE="fg=#6B9F70"
+
+source "$HOME/.config/herdr-app/shell-colors.zsh"
